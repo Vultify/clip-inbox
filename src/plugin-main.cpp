@@ -175,7 +175,7 @@ bool obs_module_load(void)
 	inbox.fileActions->moveToThread(inbox.fileThread);
 	inbox.fileThread->start();
 
-	auto *dock = new InboxDock(inbox.store, inbox.fileActions, mainWindow);
+	auto *dock = new InboxDock(inbox.store, inbox.fileActions, configFilePath("settings.json"), mainWindow);
 	if (!obs_frontend_add_dock_by_id(DOCK_ID, obs_module_text("ClipInbox"), dock)) {
 		stopFileThread();
 		delete dock;
@@ -184,6 +184,7 @@ bool obs_module_load(void)
 		obs_log(LOG_ERROR, "could not add the Clip Inbox dock");
 		return false;
 	}
+	dock->updateCount();
 
 	inbox.events = new ClipEvents(mainWindow);
 	connectInbox();

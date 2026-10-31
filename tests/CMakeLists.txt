@@ -3,6 +3,7 @@ add_executable(
   main.cpp
   test-support.hpp
   clip-naming-tests.cpp
+  clip-settings-tests.cpp
   clip-store-tests.cpp
   file-actions-tests.cpp
   file-info-tests.cpp
@@ -10,6 +11,8 @@ add_executable(
   ../src/clip.hpp
   ../src/clip-naming.cpp
   ../src/clip-naming.hpp
+  ../src/clip-settings.cpp
+  ../src/clip-settings.hpp
   ../src/clip-store.cpp
   ../src/clip-store.hpp
   ../src/com-scope.hpp

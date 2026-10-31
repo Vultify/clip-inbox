@@ -13,6 +13,7 @@ int main(int argc, char **argv)
 	runFileActionsTests(dir.path());
 	runFileInfoTests(dir.path());
 	runClipStoreTests(dir.path());
+	runClipSettingsTests(dir.path());
 
 	std::printf("\n%d failed\n", failures);
 	return failures == 0 ? 0 : 1;

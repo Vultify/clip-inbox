@@ -2,6 +2,7 @@
 #include "com-scope.hpp"
 
 #include <QDir>
+#include <QFileInfo>
 
 #ifdef _WIN32
 #include <initguid.h>
@@ -30,17 +31,16 @@ static QImage makeOpaqueIfInvisible(const QImage &image)
 	return QImage(raw.constBits(), raw.width(), raw.height(), raw.bytesPerLine(), QImage::Format_RGB32).copy();
 }
 
-ClipDetails readClipDetails(const QString &path, const QSize &thumbnailSize)
+static void readShellDetails(const QString &path, const QSize &thumbnailSize, ClipDetails &details)
 {
-	ClipDetails details;
 	ComScope com;
 	if (!com.ok())
-		return details;
+		return;
 
 	std::wstring nativePath = QDir::toNativeSeparators(path).toStdWString();
 	ComPtr<IShellItem2> item;
 	if (FAILED(SHCreateItemFromParsingName(nativePath.c_str(), nullptr, IID_PPV_ARGS(&item))))
-		return details;
+		return;
 
 	// Windows stores media length in 100-nanosecond units.
 	ULONGLONG duration = 0;
@@ -61,15 +61,21 @@ ClipDetails readClipDetails(const QString &path, const QSize &thumbnailSize)
 	if (details.thumbnail.width() > thumbnailSize.width() || details.thumbnail.height() > thumbnailSize.height())
 		details.thumbnail =
 			details.thumbnail.scaled(thumbnailSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-
-	return details;
 }
 #else
-ClipDetails readClipDetails(const QString &, const QSize &)
-{
-	return {};
-}
+static void readShellDetails(const QString &, const QSize &, ClipDetails &) {}
 #endif
+
+ClipDetails readClipDetails(const QString &path, const QSize &thumbnailSize)
+{
+	ClipDetails details;
+	QFileInfo info(path);
+	if (info.isFile())
+		details.sizeBytes = info.size();
+
+	readShellDetails(path, thumbnailSize, details);
+	return details;
+}
 
 QString formatDuration(qint64 durationMs)
 {

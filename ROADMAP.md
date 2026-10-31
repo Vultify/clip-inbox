@@ -25,7 +25,7 @@ Each stage gets tested in OBS before moving on.
 - [x] **2. Clips appear.** Saved replays, stopped recordings, and split recording files show up as rows (filename only), but only after OBS has finished writing and remuxing them.
 - [x] **3. Rename and persistence.** Type a name, press Enter, and the file is renamed safely. The list survives an OBS restart, including a recording that was still running when OBS closed. Naming rules are covered by automated tests.
 - [x] **4. Delete, skip, thumbnail, and length.** Recycle Bin delete with a confirm, a skip button, and a thumbnail plus clip length on each row.
-- [ ] **5. Polish.** File size and time recorded on each row, counter in the dock title, settings window, and a check under every OBS theme.
+- [x] **5. Polish.** File size and time recorded on each row, counter in the dock title, settings window (date format and quick tags), and a check under every OBS theme.
 - [ ] **6. Release.** Windows installer, README with screenshots, GitHub release, and a listing in the OBS forum Resources section.
 
 ## Rules
@@ -67,9 +67,11 @@ src/
   file-actions.cpp/.hpp     Renames files and sends them to the Recycle Bin
   file-info.cpp/.hpp        Gets thumbnails and lengths from Windows
   com-scope.hpp             Starts the Windows services the shell calls need
+  clip-settings.cpp/.hpp    Date format and quick tags, saved to settings.json
   inbox-dock.cpp/.hpp       The dock panel
-  clip-row.cpp/.hpp         One row: thumbnail, details, name box, buttons
-  settings-dialog.cpp/.hpp  Settings window (stage 5)
+  clip-row.cpp/.hpp         One row: thumbnail, details, name box, quick tags, buttons
+  flow-layout.cpp/.hpp      Wraps quick tag buttons onto new lines when the dock is narrow
+  settings-dialog.cpp/.hpp  Settings window
 tests/
   main.cpp                  Runs every test and reports how many failed
   *-tests.cpp               One file of checks per source file above

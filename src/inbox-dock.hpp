@@ -1,6 +1,7 @@
 #pragma once
 
 #include "clip.hpp"
+#include "clip-settings.hpp"
 
 #include <QHash>
 #include <QWidget>
@@ -17,19 +18,23 @@ class InboxDock : public QWidget {
 	Q_OBJECT
 
 public:
-	InboxDock(ClipStore *store, FileActions *fileActions, QWidget *parent = nullptr);
+	InboxDock(ClipStore *store, FileActions *fileActions, const QString &settingsPath, QWidget *parent = nullptr);
+
+	void updateCount();
 
 private:
 	void addRow(const Clip &clip);
 	void removeRow(const QString &path);
 	void requestRename(const Clip &clip, const QString &typed);
-	void keep(const Clip &clip);
+	void skip(const Clip &clip);
 	void confirmDelete(const Clip &clip);
+	void openSettings();
 	void showStatus(const QString &path, const QString &message);
-	void updateEmptyState();
 
 	ClipStore *store;
 	FileActions *fileActions;
+	QString settingsPath;
+	ClipSettings settings;
 	QHash<QString, ClipRow *> rows;
 	QLabel *emptyLabel;
 	QScrollArea *scrollArea;

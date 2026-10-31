@@ -21,7 +21,9 @@ static void testNotAVideo(const QString &dir)
 	file.close();
 
 	ClipDetails details = readClipDetails(path, QSize(192, 192));
-	check(details.thumbnail.isNull() && details.durationMs < 0, "A file Windows can't preview has no details");
+	check(details.thumbnail.isNull() && details.durationMs < 0,
+	      "A file Windows can't preview has no picture or length");
+	check(details.sizeBytes == 11, "The file size is always known");
 }
 
 // Set CLIP_INBOX_SAMPLE_VIDEO to a real recording to check thumbnails and lengths against Windows itself.

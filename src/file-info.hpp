@@ -5,10 +5,11 @@
 #include <QSize>
 #include <QString>
 
-// What Windows knows about a clip: the same thumbnail and length File Explorer shows.
+// What Windows knows about a clip: the same thumbnail, length, and size File Explorer shows.
 struct ClipDetails {
 	QImage thumbnail;
 	qint64 durationMs = -1;
+	qint64 sizeBytes = -1;
 };
 
 Q_DECLARE_METATYPE(ClipDetails)

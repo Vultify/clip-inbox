@@ -19,3 +19,4 @@ void runClipNamingTests();
 void runFileActionsTests(const QString &dir);
 void runFileInfoTests(const QString &dir);
 void runClipStoreTests(const QString &dir);
+void runClipSettingsTests(const QString &dir);

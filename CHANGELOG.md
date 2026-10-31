@@ -18,7 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - When another app has a clip open, the rename waits and finishes on its own once the file is free.
 - The inbox is saved and survives an OBS restart, including clips still finishing when OBS closed.
 - Clips whose files were moved or deleted outside OBS drop out of the inbox on startup.
-- Keep button takes a clip out of the inbox with its original name.
+- Rename button next to the name box (Enter still works too).
+- Skip button takes a clip out of the inbox with its original name.
 - Delete button sends a clip to the Recycle Bin after a confirmation. Files Windows can't recycle are left alone instead of being deleted for good.
 - Each row shows the clip's thumbnail and length, read from Windows the same way File Explorer does.
-- Automated tests for remux detection, finished-file checks, naming rules, safe renames, saving, delete safety, and clip lengths.
+- Each row also shows the file size and when the clip was recorded.
+- The dock title counts waiting clips, like "Clip Inbox (4)".
+- Settings window, opened from the gear button, with a date format choice (or no date) and quick tags.
+- Quick tags show up as buttons on every clip. Clicking one adds it to the name.
+- Automated tests for remux detection, finished-file checks, naming rules, safe renames, saving, delete safety, clip lengths, and settings.

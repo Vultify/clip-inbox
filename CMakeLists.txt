@@ -46,6 +46,8 @@ target_sources(
     src/clip-naming.hpp
     src/clip-row.cpp
     src/clip-row.hpp
+    src/clip-settings.cpp
+    src/clip-settings.hpp
     src/clip-store.cpp
     src/clip-store.hpp
     src/com-scope.hpp
@@ -55,8 +57,12 @@ target_sources(
     src/file-info.hpp
     src/file-ready.cpp
     src/file-ready.hpp
+    src/flow-layout.cpp
+    src/flow-layout.hpp
     src/inbox-dock.cpp
     src/inbox-dock.hpp
+    src/settings-dialog.cpp
+    src/settings-dialog.hpp
 )
 
 # The Windows shell APIs behind thumbnails, clip lengths, and the Recycle Bin.
