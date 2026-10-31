@@ -42,10 +42,14 @@ target_sources(
     src/clip.hpp
     src/clip-events.cpp
     src/clip-events.hpp
+    src/clip-naming.cpp
+    src/clip-naming.hpp
     src/clip-row.cpp
     src/clip-row.hpp
     src/clip-store.cpp
     src/clip-store.hpp
+    src/file-actions.cpp
+    src/file-actions.hpp
     src/file-ready.cpp
     src/file-ready.hpp
     src/inbox-dock.cpp

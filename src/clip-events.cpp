@@ -71,12 +71,17 @@ void ClipEvents::onFrontendEvent(enum obs_frontend_event event, void *data)
 	case OBS_FRONTEND_EVENT_REPLAY_BUFFER_SAVED:
 		self->report(takeObsString(obs_frontend_get_last_replay()), ClipType::Replay);
 		break;
-	case OBS_FRONTEND_EVENT_EXIT:
-		self->stopWatchingSplits();
-		break;
 	default:
 		break;
 	}
+}
+
+// OBS skips the "recording stopped" event when it closes mid-recording, so report that recording before shutting down.
+void ClipEvents::finish()
+{
+	stopWatchingSplits();
+	report(currentRecordingPath, ClipType::Recording);
+	currentRecordingPath.clear();
 }
 
 // File splitting isn't a frontend event. It's a signal on the recording output itself, so hold on to that output

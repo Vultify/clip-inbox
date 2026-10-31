@@ -12,4 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Clip Inbox dock in the OBS Docks menu, with an empty-inbox message.
 - Saved replays, stopped recordings, and split recording files appear in the inbox, newest first.
 - Clips only appear once OBS has finished writing them, and after an auto-remux the inbox shows the remuxed file.
-- Automated tests for remux detection and finished-file checks.
+- Type a name and press Enter to rename a clip to `<name> - <date>.<ext>` in the same folder.
+- Renames never overwrite: a taken name gets ` (2)`, ` (3)`, and so on.
+- Names are cleaned of characters Windows doesn't allow, and empty names are refused.
+- When another app has a clip open, the rename waits and finishes on its own once the file is free.
+- The inbox is saved and survives an OBS restart, including clips still finishing when OBS closed.
+- Clips whose files were moved or deleted outside OBS drop out of the inbox on startup.
+- Automated tests for remux detection, finished-file checks, naming rules, safe renames, and saving.

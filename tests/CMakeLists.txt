@@ -1,4 +1,21 @@
-add_executable(clip-inbox-tests file-ready-tests.cpp ../src/file-ready.cpp ../src/file-ready.hpp ../src/clip.hpp)
+add_executable(
+  clip-inbox-tests
+  main.cpp
+  test-support.hpp
+  clip-naming-tests.cpp
+  clip-store-tests.cpp
+  file-actions-tests.cpp
+  file-ready-tests.cpp
+  ../src/clip.hpp
+  ../src/clip-naming.cpp
+  ../src/clip-naming.hpp
+  ../src/clip-store.cpp
+  ../src/clip-store.hpp
+  ../src/file-actions.cpp
+  ../src/file-actions.hpp
+  ../src/file-ready.cpp
+  ../src/file-ready.hpp
+)
 target_include_directories(clip-inbox-tests PRIVATE ../src)
 target_link_libraries(clip-inbox-tests PRIVATE Qt6::Core)
 set_target_properties(clip-inbox-tests PROPERTIES AUTOMOC ON)

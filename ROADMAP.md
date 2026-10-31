@@ -23,7 +23,7 @@ Each stage gets tested in OBS before moving on.
 - [x] **0. Setup.** Build tools installed, template copied in, project docs written.
 - [x] **1. Hello dock.** Plugin builds on Windows, installs into OBS, and shows an empty Clip Inbox dock under the Docks menu.
 - [x] **2. Clips appear.** Saved replays, stopped recordings, and split recording files show up as rows (filename only), but only after OBS has finished writing and remuxing them.
-- [ ] **3. Rename and persistence.** Type a name, press Enter, and the file is renamed safely. The list survives an OBS restart, including a recording that was still running when OBS closed. Naming rules are covered by automated tests.
+- [x] **3. Rename and persistence.** Type a name, press Enter, and the file is renamed safely. The list survives an OBS restart, including a recording that was still running when OBS closed. Naming rules are covered by automated tests.
 - [ ] **4. Delete, skip, thumbnail, and length.** Recycle Bin delete with a confirm, a skip button, and a thumbnail plus clip length on each row.
 - [ ] **5. Polish.** File size and time recorded on each row, counter in the dock title, settings window, and a check under every OBS theme.
 - [ ] **6. Release.** Windows installer, README with screenshots, GitHub release, and a listing in the OBS forum Resources section.

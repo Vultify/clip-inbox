@@ -16,6 +16,8 @@ public:
 	explicit ClipEvents(QObject *parent = nullptr);
 	~ClipEvents() override;
 
+	void finish();
+
 signals:
 	void clipFinished(const Clip &clip, const QString &remuxPath);
 

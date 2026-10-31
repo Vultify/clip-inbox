@@ -1,22 +1,10 @@
 #include "file-ready.hpp"
+#include "test-support.hpp"
 
-#include <QCoreApplication>
 #include <QEventLoop>
 #include <QFile>
 #include <QHash>
-#include <QTemporaryDir>
 #include <QTimer>
-
-#include <cstdio>
-
-static int failures = 0;
-
-static void check(bool condition, const char *description)
-{
-	std::printf("%s  %s\n", condition ? "PASS" : "FAIL", description);
-	if (!condition)
-		failures++;
-}
 
 static void testRemuxTargets()
 {
@@ -175,11 +163,19 @@ static void testWatcherReportsClip(const QString &dir)
 	check(reported == path, "The watcher reports a finished file");
 }
 
-int main(int argc, char **argv)
+static void testTakePending()
 {
-	QCoreApplication app(argc, argv);
-	QTemporaryDir dir;
+	FileReadyWatcher watcher;
+	watcher.watch(Clip{"a.mkv"}, "a.mp4");
+	watcher.watch(Clip{"a.mkv"}, "a.mp4");
 
+	QList<PendingClip> taken = watcher.takePending();
+	check(taken.size() == 1 && taken[0].remuxPath == "a.mp4", "Unfinished clips are handed back once each");
+	check(watcher.takePending().isEmpty(), "Nothing is left after handing them back");
+}
+
+void runFileReadyTests(const QString &dir)
+{
 	testRemuxTargets();
 	testFinishedFile();
 	testGrowingFile();
@@ -188,10 +184,8 @@ int main(int argc, char **argv)
 	testRemuxNeverAppears();
 	testMissingFile();
 #ifdef _WIN32
-	testRealFileInUse(dir.path());
+	testRealFileInUse(dir);
 #endif
-	testWatcherReportsClip(dir.path());
-
-	std::printf("\n%d failed\n", failures);
-	return failures == 0 ? 0 : 1;
+	testWatcherReportsClip(dir);
+	testTakePending();
 }

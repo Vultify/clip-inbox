@@ -62,6 +62,7 @@ public:
 	explicit FileReadyWatcher(int intervalMs = 1000, ReadyTiming timing = {}, QObject *parent = nullptr);
 
 	void watch(const Clip &clip, const QString &remuxPath);
+	QList<PendingClip> takePending();
 
 signals:
 	void clipReady(const Clip &clip);

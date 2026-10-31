@@ -3,6 +3,8 @@
 #include <QFileInfo>
 #include <QTimer>
 
+#include <utility>
+
 #ifdef _WIN32
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -117,6 +119,13 @@ void FileReadyWatcher::watch(const Clip &clip, const QString &remuxPath)
 	pending.append({clip, remuxPath});
 	if (!timer->isActive())
 		timer->start();
+}
+
+// Stops watching and hands back whatever wasn't ready yet, so it can be saved when OBS closes.
+QList<PendingClip> FileReadyWatcher::takePending()
+{
+	timer->stop();
+	return std::exchange(pending, {});
 }
 
 void FileReadyWatcher::checkAll()
