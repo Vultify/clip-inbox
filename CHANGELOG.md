@@ -9,3 +9,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Project setup from the official OBS plugin template.
+- Clip Inbox dock in the OBS Docks menu, with an empty-inbox message.

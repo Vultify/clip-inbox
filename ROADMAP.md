@@ -21,7 +21,7 @@ Clip Inbox is an OBS Studio dock where every new recording and replay waits to b
 Each stage gets tested in OBS before moving on.
 
 - [x] **0. Setup.** Build tools installed, template copied in, project docs written.
-- [ ] **1. Hello dock.** Plugin builds on Windows, installs into OBS, and shows an empty Clip Inbox dock under the Docks menu.
+- [x] **1. Hello dock.** Plugin builds on Windows, installs into OBS, and shows an empty Clip Inbox dock under the Docks menu.
 - [ ] **2. Clips appear.** Saved replays, stopped recordings, and split recording files show up as rows (filename only), but only after OBS has finished writing and remuxing them.
 - [ ] **3. Rename and persistence.** Type a name, press Enter, and the file is renamed safely. The list survives an OBS restart. Naming rules are covered by automated tests.
 - [ ] **4. Delete, skip, thumbnail, and length.** Recycle Bin delete with a confirm, a skip button, and a thumbnail plus clip length on each row.
