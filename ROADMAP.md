@@ -29,8 +29,16 @@ Each stage gets tested in OBS before moving on.
 - [ ] **6. Release.** Windows installer, README with screenshots, GitHub release, and a listing in the OBS forum Resources section.
   - [x] Windows installer (Inno Setup, unsigned for now) and .zip, built by GitHub Actions
   - [x] README with screenshots
-  - [ ] Publish the 1.0.0 GitHub release
+  - [x] Publish the 1.0.0 GitHub release (2026-10-30)
   - [ ] OBS forum Resources listing
+
+## Later
+
+Ideas for after 1.0.0. Nothing here is decided yet.
+
+- **Free code signing through [SignPath Foundation](https://signpath.org/).** Signs the installer from GitHub Actions so the publisher shows instead of "Unknown publisher", and download reputation carries across versions.
+- **macOS and Linux releases.** Both already build. They need thumbnails, lengths, and Recycle Bin support for their platforms, plus real testing.
+- **Drop the `bin\64bit` copy** once OBS 34 is the oldest version worth supporting.
 
 ## Rules
 
