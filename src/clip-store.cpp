@@ -46,13 +46,16 @@ void ClipStore::load()
 		return;
 	}
 
+	// QJsonArray hands out temporary values, so the loops copy each one instead of binding a reference.
 	QJsonObject root = document.object();
-	for (const QJsonValue &value : root["clips"].toArray()) {
+	const QJsonArray clipsJson = root["clips"].toArray();
+	for (const QJsonValue value : clipsJson) {
 		if (auto clip = clipFromJson(value.toObject()))
 			items.append(*clip);
 	}
 
-	for (const QJsonValue &value : root["pending"].toArray()) {
+	const QJsonArray pendingJson = root["pending"].toArray();
+	for (const QJsonValue value : pendingJson) {
 		QJsonObject object = value.toObject();
 		if (auto clip = clipFromJson(object))
 			pending.append({*clip, object["remuxPath"].toString()});
