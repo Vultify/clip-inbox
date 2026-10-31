@@ -22,8 +22,8 @@ Each stage gets tested in OBS before moving on.
 
 - [x] **0. Setup.** Build tools installed, template copied in, project docs written.
 - [x] **1. Hello dock.** Plugin builds on Windows, installs into OBS, and shows an empty Clip Inbox dock under the Docks menu.
-- [ ] **2. Clips appear.** Saved replays, stopped recordings, and split recording files show up as rows (filename only), but only after OBS has finished writing and remuxing them.
-- [ ] **3. Rename and persistence.** Type a name, press Enter, and the file is renamed safely. The list survives an OBS restart. Naming rules are covered by automated tests.
+- [x] **2. Clips appear.** Saved replays, stopped recordings, and split recording files show up as rows (filename only), but only after OBS has finished writing and remuxing them.
+- [ ] **3. Rename and persistence.** Type a name, press Enter, and the file is renamed safely. The list survives an OBS restart, including a recording that was still running when OBS closed. Naming rules are covered by automated tests.
 - [ ] **4. Delete, skip, thumbnail, and length.** Recycle Bin delete with a confirm, a skip button, and a thumbnail plus clip length on each row.
 - [ ] **5. Polish.** File size and time recorded on each row, counter in the dock title, settings window, and a check under every OBS theme.
 - [ ] **6. Release.** Windows installer, README with screenshots, GitHub release, and a listing in the OBS forum Resources section.
@@ -50,6 +50,7 @@ The plugin must never lose, overwrite, or permanently delete a recording.
 | Auto-remux to MP4 is on | Track the final `.mp4`, not the `.mkv` |
 | File splitting is on | Each split file is its own row |
 | OBS crashes mid-recording | Unfinished files are never added, and nothing already in the inbox is lost |
+| OBS closed while recording | OBS skips its "recording stopped" event when closing, so the recording is added the next time OBS starts |
 | Recording folder changes in OBS settings | Existing rows keep their own full paths |
 | Replay saved while recording | Both appear as separate rows |
 

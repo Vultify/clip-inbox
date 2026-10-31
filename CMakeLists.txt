@@ -6,6 +6,7 @@ project(${_name} VERSION ${_version})
 
 option(ENABLE_FRONTEND_API "Use obs-frontend-api for UI functionality" ON)
 option(ENABLE_QT "Use Qt functionality" ON)
+option(ENABLE_TESTS "Build the Clip Inbox tests" OFF)
 
 include(compilerconfig)
 include(defaults)
@@ -34,6 +35,26 @@ if(ENABLE_QT)
   )
 endif()
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/inbox-dock.cpp src/inbox-dock.hpp)
+target_sources(
+  ${CMAKE_PROJECT_NAME}
+  PRIVATE
+    src/plugin-main.cpp
+    src/clip.hpp
+    src/clip-events.cpp
+    src/clip-events.hpp
+    src/clip-row.cpp
+    src/clip-row.hpp
+    src/clip-store.cpp
+    src/clip-store.hpp
+    src/file-ready.cpp
+    src/file-ready.hpp
+    src/inbox-dock.cpp
+    src/inbox-dock.hpp
+)
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
+
+if(ENABLE_TESTS)
+  enable_testing()
+  add_subdirectory(tests)
+endif()
