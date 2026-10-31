@@ -35,6 +35,17 @@ OBS_MODULE_USE_DEFAULT_LOCALE(PLUGIN_NAME, "en-US")
 
 static constexpr const char *DOCK_ID = "clip-inbox";
 
+// Shown in OBS's Plugin Manager instead of the bare file name.
+MODULE_EXPORT const char *obs_module_name(void)
+{
+	return obs_module_text("ClipInbox");
+}
+
+MODULE_EXPORT const char *obs_module_description(void)
+{
+	return obs_module_text("PluginDescription");
+}
+
 // Everything that runs while OBS is open. The file thread does all the disk work so OBS never waits on a slow drive.
 struct Inbox {
 	ClipStore *store = nullptr;

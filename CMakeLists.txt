@@ -72,6 +72,12 @@ endif()
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 
+# OBS 33 loads plugins from the plugin's own folder, while OBS 31 and 32 only look in bin/64bit. Shipping both copies
+# covers every supported version, and OBS 33 skips the bin/64bit copy once it has loaded the new one.
+if(WIN32)
+  install(FILES "$<TARGET_FILE:${CMAKE_PROJECT_NAME}>" DESTINATION "${CMAKE_PROJECT_NAME}")
+endif()
+
 if(ENABLE_TESTS)
   enable_testing()
   add_subdirectory(tests)

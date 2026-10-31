@@ -53,6 +53,7 @@ function Package {
         ErrorAction = 'SilentlyContinue'
         Path = @(
             "${ProjectRoot}/release/${ProductName}-*-windows-*.zip"
+            "${ProjectRoot}/release/${ProductName}-*-windows-*.exe"
         )
     }
 
@@ -66,6 +67,16 @@ function Package {
         Verbose = ($Env:CI -ne $null)
     }
     Compress-Archive -Force @CompressArgs
+    Log-Group
+
+    Log-Group "Building ${ProductName} installer..."
+    $InstallerArgs = @{
+        Version = $ProductVersion
+        PluginDir = "${ProjectRoot}/release/${Configuration}/${ProductName}"
+        OutputDir = "${ProjectRoot}/release"
+        OutputName = "${OutputName}-installer"
+    }
+    & "${ProjectRoot}/installer/build-installer.ps1" @InstallerArgs
     Log-Group
 }
 

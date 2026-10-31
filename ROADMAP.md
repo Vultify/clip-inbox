@@ -27,6 +27,10 @@ Each stage gets tested in OBS before moving on.
 - [x] **4. Delete, skip, thumbnail, and length.** Recycle Bin delete with a confirm, a skip button, and a thumbnail plus clip length on each row.
 - [x] **5. Polish.** File size and time recorded on each row, counter in the dock title, settings window (date format and quick tags), and a check under every OBS theme.
 - [ ] **6. Release.** Windows installer, README with screenshots, GitHub release, and a listing in the OBS forum Resources section.
+  - [x] Windows installer (Inno Setup, unsigned for now) and .zip, built by GitHub Actions
+  - [x] README with screenshots
+  - [ ] Publish the 1.0.0 GitHub release
+  - [ ] OBS forum Resources listing
 
 ## Rules
 
@@ -87,6 +91,12 @@ Run the tests with `ctest --test-dir build_x64 -C RelWithDebInfo`. Set `CLIP_INB
 - Hybrid MP4 recordings don't need a remux.
 - File splitting has no frontend event. It's a `file_changed(string next_file)` signal on the recording output, so the plugin reconnects to it every time a recording starts (OBS can rebuild its outputs when settings change).
 - Paths come from `obs_frontend_get_last_recording()` and `obs_frontend_get_last_replay()`. The dock is added with `obs_frontend_add_dock_by_id()`.
+
+## Notes from the OBS source (33.0.1)
+
+- OBS 33 loads Windows plugins from `C:\ProgramData\obs-studio\plugins\<name>\<name>.dll`. The older `<name>\bin\64bit\<name>.dll` still loads but is flagged "Legacy" and stops loading in OBS 34 (expected around August 2027).
+- Clip Inbox ships the DLL in both spots. OBS 33 loads the new one and skips the other, and OBS 31 and 32 only see the old one. Drop the `bin\64bit` copy once OBS 34 is the oldest version worth supporting.
+- `obs_module_name()` and `obs_module_description()` give the plugin a readable name in OBS's Plugin Manager.
 
 ## Known limitations
 
