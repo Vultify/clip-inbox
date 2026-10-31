@@ -6,7 +6,9 @@
 
 #include <obs-module.h>
 
+#include <QFileInfo>
 #include <QLabel>
+#include <QMessageBox>
 #include <QScrollArea>
 #include <QVBoxLayout>
 
@@ -47,6 +49,18 @@ InboxDock::InboxDock(ClipStore *store, FileActions *fileActions, QWidget *parent
 	connect(fileActions, &FileActions::renameFailed, this, [this](const QString &path, const QString &error) {
 		showStatus(path, QString::fromUtf8(obs_module_text("RenameFailed")).arg(error));
 	});
+	connect(fileActions, &FileActions::recycleBusy, this,
+		[this](const QString &path) { showStatus(path, obs_module_text("DeleteBusy")); });
+	connect(fileActions, &FileActions::recycleRefused, this,
+		[this](const QString &path) { showStatus(path, obs_module_text("DeleteRefused")); });
+	connect(fileActions, &FileActions::recycleFailed, this, [this](const QString &path, const QString &error) {
+		showStatus(path, QString::fromUtf8(obs_module_text("DeleteFailed")).arg(error));
+	});
+	connect(fileActions, &FileActions::detailsLoaded, this,
+		[this](const QString &path, const ClipDetails &details) {
+			if (ClipRow *row = rows.value(path))
+				row->setDetails(details);
+		});
 
 	updateEmptyState();
 }
@@ -55,10 +69,15 @@ void InboxDock::addRow(const Clip &clip)
 {
 	auto *row = new ClipRow(clip);
 	connect(row, &ClipRow::nameEntered, this, [this, clip](const QString &text) { requestRename(clip, text); });
+	connect(row, &ClipRow::keepClicked, this, [this, clip]() { keep(clip); });
+	connect(row, &ClipRow::deleteClicked, this, [this, clip]() { confirmDelete(clip); });
 
 	rows.insert(clip.path, row);
 	rowsLayout->insertWidget(0, row);
 	updateEmptyState();
+
+	QMetaObject::invokeMethod(fileActions,
+				  [actions = fileActions, path = clip.path]() { actions->loadDetails(path); });
 }
 
 void InboxDock::removeRow(const QString &path)
@@ -81,6 +100,25 @@ void InboxDock::requestRename(const Clip &clip, const QString &typed)
 	QString stem = buildStem(name, clip.recordedAt.date());
 	QMetaObject::invokeMethod(fileActions,
 				  [actions = fileActions, path = clip.path, stem]() { actions->rename(path, stem); });
+}
+
+// The file keeps its original name and simply leaves the inbox.
+void InboxDock::keep(const Clip &clip)
+{
+	QMetaObject::invokeMethod(fileActions, [actions = fileActions, path = clip.path]() { actions->cancel(path); });
+	store->remove(clip.path);
+}
+
+void InboxDock::confirmDelete(const Clip &clip)
+{
+	QString question = QString::fromUtf8(obs_module_text("DeleteQuestion")).arg(QFileInfo(clip.path).fileName());
+	QMessageBox::StandardButton answer = QMessageBox::question(this, obs_module_text("DeleteTitle"), question,
+								   QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+	if (answer != QMessageBox::Yes)
+		return;
+
+	showStatus(clip.path, {});
+	QMetaObject::invokeMethod(fileActions, [actions = fileActions, path = clip.path]() { actions->recycle(path); });
 }
 
 void InboxDock::showStatus(const QString &path, const QString &message)

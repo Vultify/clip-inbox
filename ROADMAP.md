@@ -24,7 +24,7 @@ Each stage gets tested in OBS before moving on.
 - [x] **1. Hello dock.** Plugin builds on Windows, installs into OBS, and shows an empty Clip Inbox dock under the Docks menu.
 - [x] **2. Clips appear.** Saved replays, stopped recordings, and split recording files show up as rows (filename only), but only after OBS has finished writing and remuxing them.
 - [x] **3. Rename and persistence.** Type a name, press Enter, and the file is renamed safely. The list survives an OBS restart, including a recording that was still running when OBS closed. Naming rules are covered by automated tests.
-- [ ] **4. Delete, skip, thumbnail, and length.** Recycle Bin delete with a confirm, a skip button, and a thumbnail plus clip length on each row.
+- [x] **4. Delete, skip, thumbnail, and length.** Recycle Bin delete with a confirm, a skip button, and a thumbnail plus clip length on each row.
 - [ ] **5. Polish.** File size and time recorded on each row, counter in the dock title, settings window, and a check under every OBS theme.
 - [ ] **6. Release.** Windows installer, README with screenshots, GitHub release, and a listing in the OBS forum Resources section.
 
@@ -36,7 +36,7 @@ The plugin must never lose, overwrite, or permanently delete a recording.
 - **Clean names:** strip `\ / : * ? " < > |`, trim spaces, refuse empty names.
 - **Taken names:** add ` (2)`, ` (3)`, and so on. Never overwrite.
 - **Same folder:** rename in place. Never move a file.
-- **Delete:** confirm first, then send to the Recycle Bin. Never delete permanently.
+- **Delete:** confirm first, then send to the Recycle Bin. Never delete permanently: when Windows can't recycle a file (too big for the bin, or a drive without one), leave it alone and say so.
 - **Busy files:** never touch a file OBS is still writing. If another app has the file open, keep the clip in the inbox and retry instead of failing.
 - **No popups during gameplay.** Nothing steals focus from the game.
 - **Off the UI thread:** renames, deletes, and thumbnails run in the background so OBS never stutters.
@@ -56,8 +56,6 @@ The plugin must never lose, overwrite, or permanently delete a recording.
 
 ## File structure
 
-Proposed. To be confirmed before stage 1.
-
 ```
 src/
   plugin-main.cpp           Starts and stops the plugin and connects the parts
@@ -68,13 +66,17 @@ src/
   clip-naming.cpp/.hpp      Builds safe file names (cleans text, adds date, adds (2))
   file-actions.cpp/.hpp     Renames files and sends them to the Recycle Bin
   file-info.cpp/.hpp        Gets thumbnails and lengths from Windows
+  com-scope.hpp             Starts the Windows services the shell calls need
   inbox-dock.cpp/.hpp       The dock panel
   clip-row.cpp/.hpp         One row: thumbnail, details, name box, buttons
   settings-dialog.cpp/.hpp  Settings window (stage 5)
 tests/
-  clip-naming-tests.cpp     Proves the naming rules never produce a bad or duplicate name
+  main.cpp                  Runs every test and reports how many failed
+  *-tests.cpp               One file of checks per source file above
 data/locale/en-US.ini       All on-screen text
 ```
+
+Run the tests with `ctest --test-dir build_x64 -C RelWithDebInfo`. Set `CLIP_INBOX_SAMPLE_VIDEO` to a real recording to also check thumbnails and lengths against Windows.
 
 ## Notes from the OBS source (31.1.1)
 

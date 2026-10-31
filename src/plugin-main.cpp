@@ -114,6 +114,17 @@ static void connectInbox()
 				 logPath(LOG_INFO, "renamed", oldPath + " -> " + newPath);
 				 inbox.store->remove(oldPath);
 			 });
+	QObject::connect(inbox.fileActions, &FileActions::recycled, inbox.store, [](const QString &path) {
+		logPath(LOG_INFO, "sent to the Recycle Bin", path);
+		inbox.store->remove(path);
+	});
+	QObject::connect(inbox.fileActions, &FileActions::recycleRefused, inbox.store, [](const QString &path) {
+		logPath(LOG_WARNING, "left alone because Windows would have deleted it permanently", path);
+	});
+	QObject::connect(inbox.fileActions, &FileActions::recycleFailed, inbox.store,
+			 [](const QString &path, const QString &error) {
+				 logPath(LOG_WARNING, "delete failed", path + " (" + error + ")");
+			 });
 	QObject::connect(inbox.fileActions, &FileActions::missing, inbox.store, [](const QString &path) {
 		logPath(LOG_INFO, "file no longer exists", path);
 		inbox.store->remove(path);
@@ -145,6 +156,7 @@ static void resumeLastSession()
 bool obs_module_load(void)
 {
 	qRegisterMetaType<Clip>();
+	qRegisterMetaType<ClipDetails>();
 
 	auto *mainWindow = static_cast<QMainWindow *>(obs_frontend_get_main_window());
 
@@ -155,11 +167,18 @@ bool obs_module_load(void)
 			 [](const QString &error) { logPath(LOG_WARNING, "could not save the inbox", error); });
 	inbox.store->load();
 
+	// The file thread starts before the dock exists, so the thumbnails the dock asks for never load on OBS's UI thread.
+	inbox.watcher = new FileReadyWatcher();
 	inbox.fileActions = new FileActions();
+	inbox.fileThread = new QThread();
+	inbox.watcher->moveToThread(inbox.fileThread);
+	inbox.fileActions->moveToThread(inbox.fileThread);
+	inbox.fileThread->start();
+
 	auto *dock = new InboxDock(inbox.store, inbox.fileActions, mainWindow);
 	if (!obs_frontend_add_dock_by_id(DOCK_ID, obs_module_text("ClipInbox"), dock)) {
+		stopFileThread();
 		delete dock;
-		delete inbox.fileActions;
 		delete inbox.store;
 		inbox = {};
 		obs_log(LOG_ERROR, "could not add the Clip Inbox dock");
@@ -167,13 +186,7 @@ bool obs_module_load(void)
 	}
 
 	inbox.events = new ClipEvents(mainWindow);
-	inbox.watcher = new FileReadyWatcher();
-	inbox.fileThread = new QThread();
-	inbox.watcher->moveToThread(inbox.fileThread);
-	inbox.fileActions->moveToThread(inbox.fileThread);
-
 	connectInbox();
-	inbox.fileThread->start();
 	resumeLastSession();
 
 	obs_frontend_add_event_callback(onFrontendEvent, nullptr);

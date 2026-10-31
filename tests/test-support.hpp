@@ -17,4 +17,5 @@ inline void check(bool condition, const char *description)
 void runFileReadyTests(const QString &dir);
 void runClipNamingTests();
 void runFileActionsTests(const QString &dir);
+void runFileInfoTests(const QString &dir);
 void runClipStoreTests(const QString &dir);

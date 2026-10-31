@@ -18,4 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - When another app has a clip open, the rename waits and finishes on its own once the file is free.
 - The inbox is saved and survives an OBS restart, including clips still finishing when OBS closed.
 - Clips whose files were moved or deleted outside OBS drop out of the inbox on startup.
-- Automated tests for remux detection, finished-file checks, naming rules, safe renames, and saving.
+- Keep button takes a clip out of the inbox with its original name.
+- Delete button sends a clip to the Recycle Bin after a confirmation. Files Windows can't recycle are left alone instead of being deleted for good.
+- Each row shows the clip's thumbnail and length, read from Windows the same way File Explorer does.
+- Automated tests for remux detection, finished-file checks, naming rules, safe renames, saving, delete safety, and clip lengths.

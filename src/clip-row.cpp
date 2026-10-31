@@ -7,11 +7,23 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QPixmap>
+#include <QPushButton>
 #include <QVBoxLayout>
 
-ClipRow::ClipRow(const Clip &clip, QWidget *parent) : QFrame(parent)
+static const QSize THUMBNAIL_SIZE(128, 72);
+
+ClipRow::ClipRow(const Clip &clip, QWidget *parent)
+	: QFrame(parent),
+	  typeText(obs_module_text(clip.type == ClipType::Replay ? "Replay" : "Recording"))
 {
-	auto *typeLabel = new QLabel(obs_module_text(clip.type == ClipType::Replay ? "Replay" : "Recording"), this);
+	// Until Windows hands back a thumbnail, and for clips it can't preview, the box shows a short note instead.
+	thumbnailLabel = new QLabel(obs_module_text("NoThumbnail"), this);
+	thumbnailLabel->setFixedSize(THUMBNAIL_SIZE);
+	thumbnailLabel->setAlignment(Qt::AlignCenter);
+	thumbnailLabel->setFrameShape(QFrame::StyledPanel);
+
+	typeLabel = new QLabel(typeText, this);
 	QFont typeFont = typeLabel->font();
 	typeFont.setBold(true);
 	typeLabel->setFont(typeFont);
@@ -27,19 +39,50 @@ ClipRow::ClipRow(const Clip &clip, QWidget *parent) : QFrame(parent)
 	nameEdit->setMaxLength(MAX_NAME_LENGTH);
 	connect(nameEdit, &QLineEdit::returnPressed, this, [this, nameEdit]() { emit nameEntered(nameEdit->text()); });
 
+	auto *keepButton = new QPushButton(obs_module_text("Keep"), this);
+	keepButton->setToolTip(obs_module_text("KeepTooltip"));
+	connect(keepButton, &QPushButton::clicked, this, &ClipRow::keepClicked);
+
+	auto *deleteButton = new QPushButton(obs_module_text("Delete"), this);
+	deleteButton->setToolTip(obs_module_text("DeleteTooltip"));
+	connect(deleteButton, &QPushButton::clicked, this, &ClipRow::deleteClicked);
+
 	statusLabel = new QLabel(this);
 	statusLabel->setWordWrap(true);
 	statusLabel->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
 	statusLabel->hide();
 
-	auto *header = new QHBoxLayout();
-	header->addWidget(typeLabel);
-	header->addWidget(fileLabel, 1);
+	auto *info = new QVBoxLayout();
+	info->addWidget(typeLabel);
+	info->addWidget(fileLabel);
+	info->addStretch();
+
+	auto *top = new QHBoxLayout();
+	top->addWidget(thumbnailLabel);
+	top->addLayout(info, 1);
+
+	auto *actions = new QHBoxLayout();
+	actions->addWidget(nameEdit, 1);
+	actions->addWidget(keepButton);
+	actions->addWidget(deleteButton);
 
 	auto *layout = new QVBoxLayout(this);
-	layout->addLayout(header);
-	layout->addWidget(nameEdit);
+	layout->addLayout(top);
+	layout->addLayout(actions);
 	layout->addWidget(statusLabel);
+}
+
+void ClipRow::setDetails(const ClipDetails &details)
+{
+	if (!details.thumbnail.isNull()) {
+		QPixmap pixmap = QPixmap::fromImage(details.thumbnail)
+					 .scaled(THUMBNAIL_SIZE, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+		thumbnailLabel->setPixmap(pixmap);
+		thumbnailLabel->setFrameShape(QFrame::NoFrame);
+	}
+
+	QString length = formatDuration(details.durationMs);
+	typeLabel->setText(length.isEmpty() ? typeText : typeText + "  ·  " + length);
 }
 
 // An empty message hides the status line.

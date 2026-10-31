@@ -48,13 +48,21 @@ target_sources(
     src/clip-row.hpp
     src/clip-store.cpp
     src/clip-store.hpp
+    src/com-scope.hpp
     src/file-actions.cpp
     src/file-actions.hpp
+    src/file-info.cpp
+    src/file-info.hpp
     src/file-ready.cpp
     src/file-ready.hpp
     src/inbox-dock.cpp
     src/inbox-dock.hpp
 )
+
+# The Windows shell APIs behind thumbnails, clip lengths, and the Recycle Bin.
+if(WIN32)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE shell32 ole32)
+endif()
 
 set_target_properties_plugin(${CMAKE_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${_name})
 

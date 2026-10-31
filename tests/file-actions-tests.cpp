@@ -88,6 +88,22 @@ static void testBusy(const QString &folder)
 	check(renameClipFile(path, "playing - 2026-10-30").outcome == RenameOutcome::Renamed,
 	      "The rename works once the app lets go");
 }
+
+// Only checks the cases that stop before the Recycle Bin, so test runs never fill it with junk files.
+static void testRecycleSafety(const QString &folder)
+{
+	check(recycleClipFile(folder + "/nope.mp4").outcome == RecycleOutcome::Missing,
+	      "Deleting a file that's gone is reported missing");
+
+	QString path = makeFile(folder, "open-in-player.mp4", "clip");
+	std::wstring nativePath = QDir::toNativeSeparators(path).toStdWString();
+	HANDLE handle = CreateFileW(nativePath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+				    FILE_ATTRIBUTE_NORMAL, nullptr);
+
+	check(recycleClipFile(path).outcome == RecycleOutcome::Busy, "A file another app holds isn't deleted");
+	check(QFileInfo::exists(path), "The held file is still there");
+	CloseHandle(handle);
+}
 #endif
 
 void runFileActionsTests(const QString &dir)
@@ -101,5 +117,6 @@ void runFileActionsTests(const QString &dir)
 	testMissing(folder);
 #ifdef _WIN32
 	testBusy(folder);
+	testRecycleSafety(folder);
 #endif
 }

@@ -23,6 +23,8 @@ private:
 	void addRow(const Clip &clip);
 	void removeRow(const QString &path);
 	void requestRename(const Clip &clip, const QString &typed);
+	void keep(const Clip &clip);
+	void confirmDelete(const Clip &clip);
 	void showStatus(const QString &path, const QString &message);
 	void updateEmptyState();
 

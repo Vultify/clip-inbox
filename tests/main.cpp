@@ -11,6 +11,7 @@ int main(int argc, char **argv)
 	runFileReadyTests(dir.path());
 	runClipNamingTests();
 	runFileActionsTests(dir.path());
+	runFileInfoTests(dir.path());
 	runClipStoreTests(dir.path());
 
 	std::printf("\n%d failed\n", failures);

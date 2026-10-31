@@ -1,6 +1,7 @@
 #include "file-actions.hpp"
 #include "clip-naming.hpp"
 #include "clip.hpp"
+#include "com-scope.hpp"
 
 #include <QDir>
 #include <QFile>
@@ -8,16 +9,15 @@
 #include <QTimer>
 
 #ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
+#include <shellapi.h>
+#include <shobjidl_core.h>
+#include <wrl/client.h>
+
+using Microsoft::WRL::ComPtr;
 #endif
 
 static constexpr int MAX_NUMBERED_ATTEMPTS = 999;
+static const QSize THUMBNAIL_REQUEST_SIZE(192, 192);
 
 enum class MoveResult { Moved, TargetExists, SourceBusy, SourceMissing, Error };
 
@@ -95,6 +95,141 @@ RenameResult renameClipFile(const QString &path, const QString &stem)
 	return {RenameOutcome::Failed, {}, QStringLiteral("every numbered version of this name is taken")};
 }
 
+#ifdef _WIN32
+// Windows only lets a file be deleted when every app that has it open allowed that.
+static bool isLockedAgainstDelete(const QString &path)
+{
+	std::wstring nativePath = QDir::toNativeSeparators(path).toStdWString();
+	HANDLE handle = CreateFileW(nativePath.c_str(), DELETE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+				    nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	if (handle == INVALID_HANDLE_VALUE)
+		return GetLastError() == ERROR_SHARING_VIOLATION;
+
+	CloseHandle(handle);
+	return false;
+}
+
+// Windows asks this sink before each delete. Items it can't recycle (too big for the Recycle Bin, or on a drive
+// without one) arrive without the recycle flag, and returning E_ABORT cancels them instead of deleting for good.
+class RecycleOnlySink final : public IFileOperationProgressSink {
+public:
+	bool refusedPermanentDelete = false;
+	HRESULT deleteResult = S_OK;
+
+	// The sink lives on the stack for a single operation, so reference counting has nothing to do.
+	IFACEMETHODIMP QueryInterface(REFIID riid, void **object) override
+	{
+		if (riid == IID_IUnknown || riid == __uuidof(IFileOperationProgressSink)) {
+			*object = static_cast<IFileOperationProgressSink *>(this);
+			return S_OK;
+		}
+		*object = nullptr;
+		return E_NOINTERFACE;
+	}
+	IFACEMETHODIMP_(ULONG) AddRef() override { return 1; }
+	IFACEMETHODIMP_(ULONG) Release() override { return 1; }
+
+	IFACEMETHODIMP PreDeleteItem(DWORD flags, IShellItem *) override
+	{
+		if (flags & TSF_DELETE_RECYCLE_IF_POSSIBLE)
+			return S_OK;
+
+		refusedPermanentDelete = true;
+		return E_ABORT;
+	}
+
+	IFACEMETHODIMP PostDeleteItem(DWORD, IShellItem *, HRESULT result, IShellItem *) override
+	{
+		deleteResult = result;
+		return S_OK;
+	}
+
+	IFACEMETHODIMP StartOperations() override { return S_OK; }
+	IFACEMETHODIMP FinishOperations(HRESULT) override { return S_OK; }
+	IFACEMETHODIMP PreRenameItem(DWORD, IShellItem *, LPCWSTR) override { return S_OK; }
+	IFACEMETHODIMP PostRenameItem(DWORD, IShellItem *, LPCWSTR, HRESULT, IShellItem *) override { return S_OK; }
+	IFACEMETHODIMP PreMoveItem(DWORD, IShellItem *, IShellItem *, LPCWSTR) override { return S_OK; }
+	IFACEMETHODIMP PostMoveItem(DWORD, IShellItem *, IShellItem *, LPCWSTR, HRESULT, IShellItem *) override
+	{
+		return S_OK;
+	}
+	IFACEMETHODIMP PreCopyItem(DWORD, IShellItem *, IShellItem *, LPCWSTR) override { return S_OK; }
+	IFACEMETHODIMP PostCopyItem(DWORD, IShellItem *, IShellItem *, LPCWSTR, HRESULT, IShellItem *) override
+	{
+		return S_OK;
+	}
+	IFACEMETHODIMP PreNewItem(DWORD, IShellItem *, LPCWSTR) override { return S_OK; }
+	IFACEMETHODIMP PostNewItem(DWORD, IShellItem *, LPCWSTR, LPCWSTR, DWORD, HRESULT, IShellItem *) override
+	{
+		return S_OK;
+	}
+	IFACEMETHODIMP UpdateProgress(UINT, UINT) override { return S_OK; }
+	IFACEMETHODIMP ResetTimer() override { return S_OK; }
+	IFACEMETHODIMP PauseTimer() override { return S_OK; }
+	IFACEMETHODIMP ResumeTimer() override { return S_OK; }
+};
+
+static RecycleResult recycleFailure(HRESULT result)
+{
+	return {RecycleOutcome::Failed, qt_error_string(static_cast<int>(result))};
+}
+
+RecycleResult recycleClipFile(const QString &path)
+{
+	if (!QFileInfo(path).isFile())
+		return {RecycleOutcome::Missing};
+	if (isLockedAgainstDelete(path))
+		return {RecycleOutcome::Busy};
+
+	ComScope com;
+	if (!com.ok())
+		return {RecycleOutcome::Failed, QStringLiteral("Windows shell services aren't available")};
+
+	ComPtr<IFileOperation> operation;
+	HRESULT result = CoCreateInstance(CLSID_FileOperation, nullptr, CLSCTX_ALL, IID_PPV_ARGS(&operation));
+	if (FAILED(result))
+		return recycleFailure(result);
+
+	result = operation->SetOperationFlags(FOF_ALLOWUNDO | FOF_NO_UI | FOFX_RECYCLEONDELETE);
+	if (FAILED(result))
+		return recycleFailure(result);
+
+	std::wstring nativePath = QDir::toNativeSeparators(path).toStdWString();
+	ComPtr<IShellItem> item;
+	result = SHCreateItemFromParsingName(nativePath.c_str(), nullptr, IID_PPV_ARGS(&item));
+	if (FAILED(result))
+		return recycleFailure(result);
+
+	RecycleOnlySink sink;
+	result = operation->DeleteItem(item.Get(), &sink);
+	if (SUCCEEDED(result))
+		result = operation->PerformOperations();
+
+	if (sink.refusedPermanentDelete)
+		return {RecycleOutcome::NotRecyclable};
+	if (FAILED(result))
+		return recycleFailure(result);
+	if (FAILED(sink.deleteResult))
+		return recycleFailure(sink.deleteResult);
+	if (QFileInfo::exists(path))
+		return {RecycleOutcome::Failed, QStringLiteral("Windows left the file in place")};
+
+	return {RecycleOutcome::Recycled};
+}
+#else
+// The macOS and Linux trash never deletes for good, so Qt's built-in move is safe there.
+RecycleResult recycleClipFile(const QString &path)
+{
+	if (!QFileInfo(path).isFile())
+		return {RecycleOutcome::Missing};
+
+	QFile file(path);
+	if (file.moveToTrash())
+		return {RecycleOutcome::Recycled};
+	return {RecycleOutcome::Failed, file.errorString()};
+}
+#endif
+
 FileActions::FileActions(int retryIntervalMs, QObject *parent) : QObject(parent), retryTimer(new QTimer(this))
 {
 	retryTimer->setInterval(retryIntervalMs);
@@ -112,6 +247,43 @@ void FileActions::rename(const QString &path, const QString &stem)
 	emit renameWaiting(path);
 	if (!retryTimer->isActive())
 		retryTimer->start();
+}
+
+void FileActions::recycle(const QString &path)
+{
+	cancel(path);
+
+	RecycleResult result = recycleClipFile(path);
+	switch (result.outcome) {
+	case RecycleOutcome::Recycled:
+		emit recycled(path);
+		break;
+	case RecycleOutcome::Missing:
+		emit missing(path);
+		break;
+	case RecycleOutcome::Busy:
+		emit recycleBusy(path);
+		break;
+	case RecycleOutcome::NotRecyclable:
+		emit recycleRefused(path);
+		break;
+	case RecycleOutcome::Failed:
+		emit recycleFailed(path, result.error);
+		break;
+	}
+}
+
+// Forgets a rename that was still waiting for the file, for when the clip leaves the inbox another way.
+void FileActions::cancel(const QString &path)
+{
+	waiting.remove(path);
+	if (waiting.isEmpty())
+		retryTimer->stop();
+}
+
+void FileActions::loadDetails(const QString &path)
+{
+	emit detailsLoaded(path, readClipDetails(path, THUMBNAIL_REQUEST_SIZE));
 }
 
 void FileActions::dropMissing(const QStringList &paths)
