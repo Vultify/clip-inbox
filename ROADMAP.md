@@ -26,11 +26,11 @@ Each stage gets tested in OBS before moving on.
 - [x] **3. Rename and persistence.** Type a name, press Enter, and the file is renamed safely. The list survives an OBS restart, including a recording that was still running when OBS closed. Naming rules are covered by automated tests.
 - [x] **4. Delete, skip, thumbnail, and length.** Recycle Bin delete with a confirm, a skip button, and a thumbnail plus clip length on each row.
 - [x] **5. Polish.** File size and time recorded on each row, counter in the dock title, settings window (date format and quick tags), and a check under every OBS theme.
-- [ ] **6. Release.** Windows installer, README with screenshots, GitHub release, and a listing in the OBS forum Resources section.
+- [x] **6. Release.** Windows installer, README with screenshots, GitHub release, and a listing in the OBS forum Resources section.
   - [x] Windows installer (Inno Setup, unsigned for now) and .zip, built by GitHub Actions
   - [x] README with screenshots
   - [x] Publish the 1.0.0 GitHub release (2026-10-30)
-  - [ ] OBS forum Resources listing
+  - [x] OBS forum Resources listing (2026-10-31)
 
 ## Later
 
